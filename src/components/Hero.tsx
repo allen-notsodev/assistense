@@ -17,12 +17,12 @@ interface Caption {
 }
 
 const VSL_CAPTIONS: Caption[] = [
-  { start: 0, end: 3, text: "Are you overwhelmed by daily recurring work?" },
-  { start: 3, end: 7, text: "Inboxes piling up, calendars in disarray..." },
-  { start: 7, end: 11, text: "Meet Assistense, your warm and dedicated virtual assistant team." },
-  { start: 11, end: 16, text: "We match you with vetted specialists trained to handle your tasks flawlessly." },
-  { start: 16, end: 21, text: "Focus on scaling your business while we handle the administration." },
-  { start: 21, end: 25, text: "Start your risk-free 14-day trial today and experience flawless delegation!" }
+  { start: 0, end: 3, text: "ooogaaa boooogaaaa" },
+  { start: 3, end: 7, text: "booooooo" },
+  { start: 7, end: 11, text: "crazy yapping" },
+  { start: 11, end: 16, text: "Man gtfo" },
+  { start: 16, end: 21, text: "Whatever" },
+  { start: 21, end: 25, text: "stfu" }
 ];
 
 export default function Hero({ onOpenBooking }: HeroProps) {
