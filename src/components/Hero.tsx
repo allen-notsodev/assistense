@@ -198,7 +198,7 @@ export default function Hero({ onOpenBooking }: HeroProps) {
               {/* Actual Video Playback */}
               <video
                 ref={videoRef}
-                src="https://assets.mixkit.co/videos/preview/mixkit-woman-working-at-her-desk-in-the-office-42358-large.mp4"
+                src="/videos/hero-video.mp4"
                 className="w-full h-full object-cover select-none"
                 autoPlay
                 muted={isMuted}
