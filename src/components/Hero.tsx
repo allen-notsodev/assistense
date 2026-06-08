@@ -4,16 +4,35 @@
  */
 
 import React from 'react';
-import { ArrowRight, CheckCircle2, Upload } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Play, Pause, Volume2, VolumeX, RotateCcw, Captions, Sparkles } from 'lucide-react';
 
 interface HeroProps {
   onOpenBooking: () => void;
 }
 
+interface Caption {
+  start: number;
+  end: number;
+  text: string;
+}
+
+const VSL_CAPTIONS: Caption[] = [
+  { start: 0, end: 3, text: "Are you overwhelmed by daily recurring work?" },
+  { start: 3, end: 7, text: "Inboxes piling up, calendars in disarray..." },
+  { start: 7, end: 11, text: "Meet Assistense, your warm and dedicated virtual assistant team." },
+  { start: 11, end: 16, text: "We match you with vetted specialists trained to handle your tasks flawlessly." },
+  { start: 16, end: 21, text: "Focus on scaling your business while we handle the administration." },
+  { start: 21, end: 25, text: "Start your risk-free 14-day trial today and experience flawless delegation!" }
+];
+
 export default function Hero({ onOpenBooking }: HeroProps) {
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [imageSrc, setImageSrc] = React.useState("/src/assets/images/customer_assistant_hero_1780733993869.png");
-  const [isDragging, setIsDragging] = React.useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = React.useState(true);
+  const [isMuted, setIsMuted] = React.useState(true);
+  const [currentTime, setCurrentTime] = React.useState(0);
+  const [duration, setDuration] = React.useState(25); // Simulated duration limit or actual video length
+  const [currentCaption, setCurrentCaption] = React.useState("");
+  const [showCaptions, setShowCaptions] = React.useState(true);
 
   const handleScrollToHow = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -31,53 +50,65 @@ export default function Hero({ onOpenBooking }: HeroProps) {
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
+  // Handle video playback events
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const time = videoRef.current.currentTime;
+      setCurrentTime(time);
+      
+      // Update subtitle captions based on current time
+      const match = VSL_CAPTIONS.find(c => time >= c.start && time <= c.end);
+      setCurrentCaption(match ? match.text : "");
+    }
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration || 25);
+    }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setImageSrc(event.target.result as string);
-          }
-        };
-        reader.readAsDataURL(file);
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
       }
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setImageSrc(event.target.result as string);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
     }
   };
 
-  const handleContainerClick = () => {
-    fileInputRef.current?.click();
+  const handleRestart = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (videoRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = clickX / rect.width;
+      videoRef.current.currentTime = percentage * duration;
+    }
+  };
+
+  // Formatted seconds helper (e.g. 0:12)
+  const formatTime = (time: number) => {
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   return (
@@ -155,92 +186,139 @@ export default function Hero({ onOpenBooking }: HeroProps) {
             </div>
           </div>
 
-          {/* Hero Illustration Graphic Area */}
-          <div className="lg:col-span-5 flex justify-center items-center w-full">
-            <input 
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              className="hidden"
-            />
-            <div 
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={handleContainerClick}
-              className={`relative w-full max-w-sm lg:max-w-none aspect-[3/4] overflow-hidden rounded-3xl shadow-2xl border-4 bg-[#152842] group cursor-pointer transition-all duration-300 ${
-                isDragging ? 'border-emerald-400 scale-102 ring-4 ring-emerald-400/20 shadow-emerald-400/10' : 'border-white/10 hover:border-emerald-300/30'
-              }`}
-            >
-              {/* Decorative accent element */}
-              <div className="absolute -top-3 -right-3 w-20 h-20 bg-[#5F7D6E]/20 rounded-full blur-xl -z-10" />
-              <div className="absolute -bottom-3 -left-3 w-32 h-32 bg-[#1F3A5F]/30 rounded-full blur-2xl -z-10" />
+          {/* Hero Video Sales Letter Graphic Area */}
+          <div className="lg:col-span-5 flex flex-col justify-center items-center w-full">
+            {/* Header label for VSL */}
+            <div className="mb-3 flex items-center space-x-2 self-start lg:self-center bg-[#5F7D6E]/30 backdrop-blur-md border border-[#5F7D6E]/20 px-3.5 py-1.5 rounded-full text-xs animate-pulse">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+              <span className="font-sans font-semibold text-emerald-200 tracking-wide">Video Sales Letter: How It Works</span>
+            </div>
 
-              <img
-                src={imageSrc}
-                alt="Professional virtual assistant delivering flawless delegation support to a business owner"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover object-[center_35%] select-none animate-fade-in"
-                onError={(e) => {
-                  // If image fails to load, show a neutral gradient background instead of a broken image symbol
-                  e.currentTarget.style.display = 'none';
-                  const fallback = document.getElementById('hero-img-fallback');
-                  if (fallback) fallback.classList.remove('hidden');
-                }}
+            <div className="relative w-full max-w-md lg:max-w-none aspect-[16/10] sm:aspect-[4/3] md:aspect-[16/10] overflow-hidden rounded-3xl shadow-2xl border-4 border-white/10 bg-black group shadow-[#1F3A5F]/45">
+              {/* Actual Video Playback */}
+              <video
+                ref={videoRef}
+                src="https://assets.mixkit.co/videos/preview/mixkit-woman-working-at-her-desk-in-the-office-42358-large.mp4"
+                className="w-full h-full object-cover select-none"
+                autoPlay
+                muted={isMuted}
+                loop
+                playsInline
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onClick={togglePlay}
               />
 
-              {/* Overlay on hover to clarify action */}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-5 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-left z-10 pointer-events-none">
-                <div className="flex items-center space-x-2 text-white">
-                  <Upload className="w-4 h-4 text-emerald-300 stroke-[2.5]" />
-                  <span className="text-xs font-sans font-bold uppercase tracking-wider">Drag & Drop or Click to Replace</span>
-                </div>
-                <span className="text-[10px] text-gray-300 mt-1">PNG, JPG, or WEBP. Instantly updates mockup.</span>
-              </div>
+              {/* Glowing Warm Play Button when Paused */}
+              {!isPlaying && (
+                <button
+                  onClick={togglePlay}
+                  className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-[#5F7D6E] hover:bg-emerald-500 text-white flex items-center justify-center transition-all duration-300 shadow-lg scale-105 group-hover:scale-110 z-20 cursor-pointer animate-fade-in"
+                >
+                  <Play className="w-7 h-7 fill-white translate-x-0.5" />
+                </button>
+              )}
 
-              {/* Special interactive dragging overlay state */}
-              {isDragging && (
-                <div className="absolute inset-0 bg-[#1F3A5F]/85 backdrop-blur-xs flex flex-col items-center justify-center text-center p-6 z-25 pointer-events-none transition-all duration-300">
-                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-3 text-emerald-300 animate-bounce">
-                    <Upload className="w-8 h-8 stroke-[2.5]" />
-                  </div>
-                  <p className="text-sm font-bold text-white uppercase tracking-wider">Drop your image here</p>
-                  <p className="text-[10px] text-emerald-300/80 mt-1">Release to replace homepage hero cover</p>
+              {/* Mute status pulsing help banner on startup */}
+              {isMuted && isPlaying && (
+                <button
+                  onClick={toggleMute}
+                  className="absolute top-4 left-4 right-4 bg-[#1F3A5F]/95 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl text-xs flex items-center justify-between z-20 text-emerald-200 hover:text-white transition-all cursor-pointer shadow-md animate-bounce"
+                >
+                  <span className="flex items-center space-x-2 font-medium">
+                    <VolumeX className="w-4 h-4 text-emerald-300 stroke-[2.5]" />
+                    <span>Video status: Muted. Click to unmute and hear audio script!</span>
+                  </span>
+                  <span className="bg-[#5F7D6E] text-white px-2 py-0.5 rounded-md text-[9px] font-bold uppercase">
+                    UNMUTE
+                  </span>
+                </button>
+              )}
+
+              {/* Subtitles Overlay */}
+              {showCaptions && currentCaption && (
+                <div className="absolute bottom-14 left-4 right-4 flex justify-center text-center z-10 pointer-events-none transition-all duration-300">
+                  <span className="bg-black/85 text-white/95 px-3 py-1.5 rounded-lg text-xs md:text-sm font-sans font-medium border border-white/5 shadow-md leading-snug">
+                    {currentCaption}
+                  </span>
                 </div>
               )}
 
-              {/* Robust modern vector backup skeleton fallback */}
-              <div
-                id="hero-img-fallback"
-                className="hidden h-full w-full bg-gradient-to-tr from-[#1F3A5F]/20 to-[#5F7D6E]/20 rounded-2xl flex flex-col justify-between p-6 overflow-hidden relative"
-              >
-                <div className="space-y-2">
-                  <div className="w-16 h-2.5 bg-[#1F3A5F]/40 rounded-full" />
-                  <div className="w-28 h-4 bg-[#1F3A5F] rounded-full" />
-                </div>
+              {/* Fully functional customized VSL UI overlay tray */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3.5 flex flex-col space-y-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 z-20 text-left">
                 
-                {/* Visual conceptual representation of delegation */}
-                <div className="flex items-center justify-between my-auto relative px-8">
-                  <div className="w-16 h-16 rounded-xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
-                    <span className="text-xl">💼</span>
-                  </div>
-                  <div className="flex-1 border-t-2 border-dashed border-[#5F7D6E] mx-4 relative">
-                    <span className="absolute -top-3 right-1/2 translate-x-1/2 text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-mono font-bold">
-                      ASSIGN
-                    </span>
-                  </div>
-                  <div className="w-16 h-16 rounded-xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
-                    <span className="text-xl">👩‍💻</span>
+                {/* Advanced progress bar scrubber */}
+                <div 
+                  onClick={handleProgressClick}
+                  className="w-full h-1.5 bg-white/20 hover:h-2 rounded-full cursor-pointer transition-all relative"
+                >
+                  <div 
+                    className="h-full bg-[#5F7D6E] rounded-full transition-all relative"
+                    style={{ width: `${(currentTime / duration) * 100}%` }}
+                  >
+                    <div className="absolute -right-1 -top-1 w-3 h-3 rounded-full bg-white shadow-md border border-[#5F7D6E]" />
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-[10px] font-mono text-gray-500">
-                  <span>Client Dashboard</span>
-                  <span>Active Dedicated Specialist</span>
+                {/* Subtitle toggle button & indicators */}
+                <div className="flex items-center justify-between text-white text-xs">
+                  <div className="flex items-center space-x-3.5">
+                    {/* Play / Pause */}
+                    <button 
+                      onClick={togglePlay} 
+                      className="hover:text-emerald-300 transition-colors cursor-pointer"
+                      title={isPlaying ? "Pause" : "Play"}
+                    >
+                      {isPlaying ? <Pause className="w-4 h-4 stroke-[2.5]" /> : <Play className="w-4 h-4 stroke-[2.5]" />}
+                    </button>
+
+                    {/* Restart */}
+                    <button 
+                      onClick={handleRestart} 
+                      className="hover:text-emerald-300 transition-colors cursor-pointer"
+                      title="Restart Video"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Mute / Unmute */}
+                    <button 
+                      onClick={toggleMute} 
+                      className="hover:text-emerald-300 transition-colors flex items-center space-x-1 cursor-pointer"
+                      title={isMuted ? "Unmute" : "Mute"}
+                    >
+                      {isMuted ? <VolumeX className="w-4 h-4 stroke-[2.5]" /> : <Volume2 className="w-4 h-4 stroke-[2.5]" />}
+                    </button>
+
+                    {/* Runtime Tracker */}
+                    <span className="text-[10px] font-mono text-gray-300">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    {/* Captions Toggle */}
+                    <button 
+                      onClick={() => setShowCaptions(!showCaptions)} 
+                      className={`transition-colors flex items-center space-x-1 cursor-pointer ${showCaptions ? 'text-emerald-300' : 'text-gray-400 hover:text-white'}`}
+                      title="Toggle Captions"
+                    >
+                      <Captions className="w-4 h-4" />
+                      <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:inline">CC</span>
+                    </button>
+
+                    <span className="text-[9px] bg-red-600/90 text-white font-bold px-1.5 py-0.5 rounded uppercase tracking-wider font-sans">
+                      LIVE DEMO
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Bottom helper text */}
+            <p className="text-[11px] text-gray-400 mt-2 text-center max-w-sm font-sans">
+              Play induction video to see how easily your team delegates inboxes, scheduling, and admin.
+            </p>
           </div>
         </div>
       </div>
