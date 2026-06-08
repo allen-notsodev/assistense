@@ -4,13 +4,17 @@
  */
 
 import React from 'react';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Upload } from 'lucide-react';
 
 interface HeroProps {
   onOpenBooking: () => void;
 }
 
 export default function Hero({ onOpenBooking }: HeroProps) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [imageSrc, setImageSrc] = React.useState("/src/assets/images/customer_assistant_hero_1780733993869.png");
+  const [isDragging, setIsDragging] = React.useState(false);
+
   const handleScrollToHow = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const element = document.querySelector('#how-it-works');
@@ -27,8 +31,54 @@ export default function Hero({ onOpenBooking }: HeroProps) {
     }
   };
 
-  // Safe fallback vector drawing if the generated PNG doesn't load
-  const heroImagePath = "/src/assets/images/customer_assistant_hero_1780733993869.png";
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setImageSrc(event.target.result as string);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setImageSrc(event.target.result as string);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleContainerClick = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <section
@@ -89,7 +139,7 @@ export default function Hero({ onOpenBooking }: HeroProps) {
                 id="hero-primary-cta"
                 type="button"
                 onClick={onOpenBooking}
-                className="bg-white hover:bg-gray-100 text-[#1F3A5F] px-8 py-3.5 text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer rounded-full"
+                className="bg-white hover:bg-gray-100 text-[#1F3A5F] px-8 py-3.5 text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer rounded-full shadow-md"
               >
                 <span>Chat with Us</span>
                 <ArrowRight className="w-4 h-4 text-[#1F3A5F]" />
@@ -107,23 +157,58 @@ export default function Hero({ onOpenBooking }: HeroProps) {
 
           {/* Hero Illustration Graphic Area */}
           <div className="lg:col-span-5 flex justify-center items-center w-full">
-            <div className="relative w-full max-w-sm lg:max-w-none aspect-[3/4] overflow-hidden rounded-3xl shadow-2xl border-4 border-white/10 bg-[#152842]">
+            <input 
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+            <div 
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleContainerClick}
+              className={`relative w-full max-w-sm lg:max-w-none aspect-[3/4] overflow-hidden rounded-3xl shadow-2xl border-4 bg-[#152842] group cursor-pointer transition-all duration-300 ${
+                isDragging ? 'border-emerald-400 scale-102 ring-4 ring-emerald-400/20 shadow-emerald-400/10' : 'border-white/10 hover:border-emerald-300/30'
+              }`}
+            >
               {/* Decorative accent element */}
               <div className="absolute -top-3 -right-3 w-20 h-20 bg-[#5F7D6E]/20 rounded-full blur-xl -z-10" />
               <div className="absolute -bottom-3 -left-3 w-32 h-32 bg-[#1F3A5F]/30 rounded-full blur-2xl -z-10" />
 
               <img
-                src={heroImagePath}
+                src={imageSrc}
                 alt="Professional virtual assistant delivering flawless delegation support to a business owner"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover object-[center_35%] select-none animate-fade-in"
                 onError={(e) => {
-                  // If generated image fails, display a fall-back SVG gracefully
+                  // If image fails to load, show a neutral gradient background instead of a broken image symbol
                   e.currentTarget.style.display = 'none';
                   const fallback = document.getElementById('hero-img-fallback');
                   if (fallback) fallback.classList.remove('hidden');
                 }}
               />
+
+              {/* Overlay on hover to clarify action */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-5 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-left z-10 pointer-events-none">
+                <div className="flex items-center space-x-2 text-white">
+                  <Upload className="w-4 h-4 text-emerald-300 stroke-[2.5]" />
+                  <span className="text-xs font-sans font-bold uppercase tracking-wider">Drag & Drop or Click to Replace</span>
+                </div>
+                <span className="text-[10px] text-gray-300 mt-1">PNG, JPG, or WEBP. Instantly updates mockup.</span>
+              </div>
+
+              {/* Special interactive dragging overlay state */}
+              {isDragging && (
+                <div className="absolute inset-0 bg-[#1F3A5F]/85 backdrop-blur-xs flex flex-col items-center justify-center text-center p-6 z-25 pointer-events-none transition-all duration-300">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-3 text-emerald-300 animate-bounce">
+                    <Upload className="w-8 h-8 stroke-[2.5]" />
+                  </div>
+                  <p className="text-sm font-bold text-white uppercase tracking-wider">Drop your image here</p>
+                  <p className="text-[10px] text-emerald-300/80 mt-1">Release to replace homepage hero cover</p>
+                </div>
+              )}
 
               {/* Robust modern vector backup skeleton fallback */}
               <div
